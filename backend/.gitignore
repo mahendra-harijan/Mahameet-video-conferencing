@@ -1,0 +1,14 @@
+# Node dependencies
+node_modules/
+
+# Env files (do not commit secrets)
+.env
+.env.*
+.env.example
+
+
+
+
+
+
+
