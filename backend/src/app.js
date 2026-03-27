@@ -41,6 +41,9 @@ const io = connectToSocket(server, { allowedOrigins });
 app.set("port", Number(process.env.PORT) || 8000)
 
 app.set("trust proxy", 1);
+app.get("/health", (_req, res) => {
+    res.send(" Server Running");
+});
 
 app.use(
     cors({
