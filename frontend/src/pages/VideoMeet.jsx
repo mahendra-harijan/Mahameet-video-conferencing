@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import io from "socket.io-client";
-import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Zoom, Drawer, AppBar, Toolbar, Container, Chip, LinearProgress } from '@mui/material';
+import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Zoom, Drawer, AppBar, Toolbar, Container, LinearProgress } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import CallEndIcon from '@mui/icons-material/CallEnd';
@@ -102,8 +102,6 @@ export default function VideoMeetComponent() {
     let [askForUsername, setAskForUsername] = useState(true);
     let [username, setUsername] = useState("");
     let [isConnecting, setIsConnecting] = useState(false);
-    let [connectionStatus, setConnectionStatus] = useState('disconnected');
-    let [callDuration, setCallDuration] = useState(0);
     const videoRef = useRef([]);
     let [videos, setVideos] = useState([]);
     const participantCount = 1 + videos.length;
@@ -138,7 +136,7 @@ export default function VideoMeetComponent() {
         }
     }, []);
 
-    const getUserMedia = useCallback(() => {
+    const getUserMedia = () => {
         if ((video && videoAvailable) || (audio && audioAvailable)) {
             navigator.mediaDevices.getUserMedia({ video: video, audio: audio })
                 .then(getUserMediaSuccess)
@@ -151,15 +149,15 @@ export default function VideoMeetComponent() {
                 }
             } catch (e) { }
         }
-    }, [video, videoAvailable, audio, audioAvailable]);
+    };
 
-    const getDislayMedia = useCallback(() => {
+    const getDislayMedia = () => {
         if (screen && navigator.mediaDevices.getDisplayMedia) {
             navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
                 .then(getDislayMediaSuccess)
                 .catch((e) => console.log(e));
         }
-    }, [screen]);
+    };
 
     useEffect(() => {
         getPermissions();
@@ -183,7 +181,8 @@ export default function VideoMeetComponent() {
         if (video !== undefined && audio !== undefined && !askForUsername) {
             getUserMedia();
         }
-    }, [video, audio, askForUsername, getUserMedia]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [video, audio, askForUsername]);
 
     useEffect(() => {
         // Auto-connect when username already available (e.g., passed from join page).
@@ -336,7 +335,6 @@ export default function VideoMeetComponent() {
             // Send both roomId and the user's chosen name so the backend can broadcast a user map.
             socketRef.current.emit('join-call', { roomId, name: username });
             socketIdRef.current = socketRef.current.id;
-            setConnectionStatus('connected');
             socketRef.current.on('chat-message', addMessage);
             socketRef.current.on('user-map', (map) => {
                 if (map && typeof map === 'object') {
@@ -428,21 +426,12 @@ export default function VideoMeetComponent() {
         setScreen(!screen);
     };
 
-    const formatDuration = (seconds) => {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        if (hrs > 0) {
-            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
     useEffect(() => {
         if (screen !== undefined) {
             getDislayMedia();
         }
-    }, [screen, getDislayMedia]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [screen]);
 
     const handleEndCall = () => {
         try {
@@ -798,16 +787,6 @@ export default function VideoMeetComponent() {
                                         <FullscreenIcon />
                                     </IconButton>
 
-                                    <Chip
-                                        label={formatDuration(callDuration)}
-                                        sx={{
-                                            bgcolor: 'rgba(0,0,0,0.6)',
-                                            color: 'white',
-                                            fontFamily: 'monospace',
-                                            fontSize: '1rem',
-                                            fontWeight: 600
-                                        }}
-                                    />
                                 </Toolbar>
                             </Container>
                         </AppBar>
