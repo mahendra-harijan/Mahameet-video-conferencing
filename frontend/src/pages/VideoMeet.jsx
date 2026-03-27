@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import io from "socket.io-client";
-import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Zoom, Drawer, AppBar, Toolbar, Container, LinearProgress } from '@mui/material';
+import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Fade, Zoom, Slide, Drawer, IconButton as MuiIconButton, AppBar, Toolbar, Container, Chip, LinearProgress } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import CallEndIcon from '@mui/icons-material/CallEnd';
@@ -14,8 +14,10 @@ import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import SettingsIcon from '@mui/icons-material/Settings';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import server from '../environment';
+import styles from "../styles/videoComponent.module.css";
 
 const server_url = server;
 
@@ -102,6 +104,9 @@ export default function VideoMeetComponent() {
     let [askForUsername, setAskForUsername] = useState(true);
     let [username, setUsername] = useState("");
     let [isConnecting, setIsConnecting] = useState(false);
+    let [connectionStatus, setConnectionStatus] = useState('disconnected');
+    let [callDuration, setCallDuration] = useState(0);
+    let [isFullscreen, setIsFullscreen] = useState(false);
     const videoRef = useRef([]);
     let [videos, setVideos] = useState([]);
     const participantCount = 1 + videos.length;
@@ -122,52 +127,16 @@ export default function VideoMeetComponent() {
         }
     }, []);
 
-    const getPermissions = useCallback(async () => {
-        try {
-            const videoPermission = await navigator.mediaDevices.getUserMedia({ video: true });
-            setVideoAvailable(Boolean(videoPermission));
-
-            const audioPermission = await navigator.mediaDevices.getUserMedia({ audio: true });
-            setAudioAvailable(Boolean(audioPermission));
-
-            setScreenAvailable(Boolean(navigator.mediaDevices.getDisplayMedia));
-        } catch (error) {
-            console.log(error);
-        }
-    }, []);
-
-    const getUserMedia = () => {
-        if ((video && videoAvailable) || (audio && audioAvailable)) {
-            navigator.mediaDevices.getUserMedia({ video: video, audio: audio })
-                .then(getUserMediaSuccess)
-                .catch((e) => console.log(e));
-        } else {
-            try {
-                if (localVideoref.current && localVideoref.current.srcObject) {
-                    let tracks = localVideoref.current.srcObject.getTracks();
-                    tracks.forEach(track => track.stop());
-                }
-            } catch (e) { }
-        }
-    };
-
-    const getDislayMedia = () => {
-        if (screen && navigator.mediaDevices.getDisplayMedia) {
-            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-                .then(getDislayMediaSuccess)
-                .catch((e) => console.log(e));
-        }
-    };
-
     useEffect(() => {
         getPermissions();
 
+        // If username is provided via query string, skip the name prompt.
         if (queryName.trim()) {
             setUsername(queryName);
             setAskForUsername(false);
         }
-
         return () => {
+            // Cleanup on unmount
             if (window.localStream) {
                 window.localStream.getTracks().forEach(track => track.stop());
             }
@@ -175,13 +144,68 @@ export default function VideoMeetComponent() {
                 socketRef.current.disconnect();
             }
         };
-    }, [getPermissions, queryName]);
+    }, []);
+
+    useEffect(() => {
+        let interval;
+        if (connectionStatus === 'connected') {
+            interval = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [connectionStatus]);
+
+    const formatDuration = (seconds) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        if (hrs > 0) {
+            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const getDislayMedia = () => {
+        if (screen) {
+            if (navigator.mediaDevices.getDisplayMedia) {
+                navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+                    .then(getDislayMediaSuccess)
+                    .catch((e) => console.log(e));
+            }
+        }
+    };
+
+    const getPermissions = async () => {
+        try {
+            const videoPermission = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (videoPermission) {
+                setVideoAvailable(true);
+            } else {
+                setVideoAvailable(false);
+            }
+
+            const audioPermission = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (audioPermission) {
+                setAudioAvailable(true);
+            } else {
+                setAudioAvailable(false);
+            }
+
+            if (navigator.mediaDevices.getDisplayMedia) {
+                setScreenAvailable(true);
+            } else {
+                setScreenAvailable(false);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     useEffect(() => {
         if (video !== undefined && audio !== undefined && !askForUsername) {
             getUserMedia();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [video, audio, askForUsername]);
 
     useEffect(() => {
@@ -190,7 +214,7 @@ export default function VideoMeetComponent() {
             getMedia();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [askForUsername, username]);
+    }, [askForUsername]);
 
     const getUserMediaSuccess = (stream) => {
         try {
@@ -247,6 +271,21 @@ export default function VideoMeetComponent() {
                 });
             }
         });
+    };
+
+    const getUserMedia = () => {
+        if ((video && videoAvailable) || (audio && audioAvailable)) {
+            navigator.mediaDevices.getUserMedia({ video: video, audio: audio })
+                .then(getUserMediaSuccess)
+                .catch((e) => console.log(e));
+        } else {
+            try {
+                if (localVideoref.current && localVideoref.current.srcObject) {
+                    let tracks = localVideoref.current.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+            } catch (e) { }
+        }
     };
 
     const getDislayMediaSuccess = (stream) => {
@@ -335,6 +374,7 @@ export default function VideoMeetComponent() {
             // Send both roomId and the user's chosen name so the backend can broadcast a user map.
             socketRef.current.emit('join-call', { roomId, name: username });
             socketIdRef.current = socketRef.current.id;
+            setConnectionStatus('connected');
             socketRef.current.on('chat-message', addMessage);
             socketRef.current.on('user-map', (map) => {
                 if (map && typeof map === 'object') {
@@ -422,16 +462,15 @@ export default function VideoMeetComponent() {
         }
     };
 
-    const handleScreen = () => {
-        setScreen(!screen);
-    };
-
     useEffect(() => {
         if (screen !== undefined) {
             getDislayMedia();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [screen]);
+
+    const handleScreen = () => {
+        setScreen(!screen);
+    };
 
     const handleEndCall = () => {
         try {
@@ -487,11 +526,18 @@ export default function VideoMeetComponent() {
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
+            setIsFullscreen(true);
         } else {
             document.exitFullscreen();
+            setIsFullscreen(false);
         }
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    };
 
     return (
         <Box sx={{ height: '100vh', background: '#0a0e1a', position: 'relative', overflow: 'hidden' }}>
@@ -787,6 +833,16 @@ export default function VideoMeetComponent() {
                                         <FullscreenIcon />
                                     </IconButton>
 
+                                    <Chip
+                                        label={formatDuration(callDuration)}
+                                        sx={{
+                                            bgcolor: 'rgba(0,0,0,0.6)',
+                                            color: 'white',
+                                            fontFamily: 'monospace',
+                                            fontSize: '1rem',
+                                            fontWeight: 600
+                                        }}
+                                    />
                                 </Toolbar>
                             </Container>
                         </AppBar>
@@ -879,6 +935,7 @@ export default function VideoMeetComponent() {
                                     placeholder="Type a message..."
                                     value={message}
                                     onChange={handleMessage}
+                                    onKeyPress={handleKeyPress}
                                     variant="outlined"
                                     size="small"
                                     sx={{

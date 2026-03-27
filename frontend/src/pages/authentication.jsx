@@ -17,9 +17,11 @@ import { Snackbar, Alert, IconButton, InputAdornment, Fade, Zoom } from '@mui/ma
 import { useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Modern dark theme
 const modernTheme = createTheme({
