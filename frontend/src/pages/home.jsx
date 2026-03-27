@@ -2,15 +2,13 @@ import React, { useContext, useState, useEffect } from 'react'
 import withAuth from '../utils/withAuth'
 import { useNavigate } from 'react-router-dom'
 import "../App.css";
-import { Button, IconButton, TextField, Avatar, Menu, MenuItem, Divider, Box, Typography, Chip, Fade, Zoom, Tooltip, Paper, InputAdornment, Container, Grid, Card, CardContent, LinearProgress } from '@mui/material';
+import { Button, IconButton, TextField, Avatar, Menu, MenuItem, Divider, Box, Typography, Chip, Fade, Zoom, Paper, InputAdornment, Container, Grid, Card, CardContent, LinearProgress } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import RestoreIcon from '@mui/icons-material/Restore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import HistoryIcon from '@mui/icons-material/History';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PeopleIcon from '@mui/icons-material/People';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -18,7 +16,6 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import LinkIcon from '@mui/icons-material/Link';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { AuthContext } from '../contexts/AuthContext';
 
 function HomeComponent() {
@@ -221,12 +218,6 @@ function HomeComponent() {
 
     const handleMenuClose = () => {
         setAnchorEl(null);
-    };
-
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            handleJoinVideoCall();
-        }
     };
 
     const handleQuickJoin = (code) => {

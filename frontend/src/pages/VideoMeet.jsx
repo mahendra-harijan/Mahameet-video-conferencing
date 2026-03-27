@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import io from "socket.io-client";
-import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Fade, Zoom, Slide, Drawer, IconButton as MuiIconButton, AppBar, Toolbar, Container, Chip, LinearProgress } from '@mui/material';
+import { Badge, IconButton, TextField, Button, Box, Typography, Paper, Avatar, Zoom, Drawer, AppBar, Toolbar, Container, Chip, LinearProgress } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import CallEndIcon from '@mui/icons-material/CallEnd';
@@ -14,10 +14,8 @@ import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import SettingsIcon from '@mui/icons-material/Settings';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import server from '../environment';
-import styles from "../styles/videoComponent.module.css";
 
 const server_url = server;
 
@@ -106,7 +104,7 @@ export default function VideoMeetComponent() {
     let [isConnecting, setIsConnecting] = useState(false);
     let [connectionStatus, setConnectionStatus] = useState('disconnected');
     let [callDuration, setCallDuration] = useState(0);
-    let [isFullscreen, setIsFullscreen] = useState(false);
+    let [, setIsFullscreen] = useState(false);
     const videoRef = useRef([]);
     let [videos, setVideos] = useState([]);
     const participantCount = 1 + videos.length;
@@ -144,7 +142,7 @@ export default function VideoMeetComponent() {
                 socketRef.current.disconnect();
             }
         };
-    }, []);
+    }, [queryName]);
 
     useEffect(() => {
         let interval;
@@ -206,6 +204,7 @@ export default function VideoMeetComponent() {
         if (video !== undefined && audio !== undefined && !askForUsername) {
             getUserMedia();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [video, audio, askForUsername]);
 
     useEffect(() => {
@@ -466,6 +465,7 @@ export default function VideoMeetComponent() {
         if (screen !== undefined) {
             getDislayMedia();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [screen]);
 
     const handleScreen = () => {

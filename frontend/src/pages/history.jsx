@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom';
 import {
     Card,
     Box,
-    CardActions,
     CardContent,
     Button,
     Typography,
@@ -22,7 +21,6 @@ import {
     InputAdornment,
     Menu,
     MenuItem,
-    Avatar,
     Divider
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
@@ -36,7 +34,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'; // Added missing import
@@ -53,7 +50,6 @@ export default function History() {
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [selectedMeeting, setSelectedMeeting] = useState(null);
 
-    const routeTo = useNavigate();
     const routerNavigate = useNavigate();
 
     const storedToken = localStorage.getItem('token');
@@ -67,19 +63,7 @@ export default function History() {
         }
     })();
 
-    useEffect(() => {
-        if (!isLoggedIn) {
-            routerNavigate('/auth');
-            return;
-        }
-        fetchHistory();
-    }, []);
-
-    useEffect(() => {
-        filterMeetings();
-    }, [searchTerm, selectedFilter, meetings]);
-
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         try {
             setLoading(true);
             const history = await getHistoryOfUser();
@@ -92,9 +76,9 @@ export default function History() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [getHistoryOfUser]);
 
-    const filterMeetings = () => {
+    const filterMeetings = useCallback(() => {
         let filtered = [...meetings];
 
         // Apply search filter
@@ -127,7 +111,19 @@ export default function History() {
         }
 
         setFilteredMeetings(filtered);
-    };
+    }, [meetings, searchTerm, selectedFilter]);
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            routerNavigate('/auth');
+            return;
+        }
+        fetchHistory();
+    }, [fetchHistory, isLoggedIn, routerNavigate]);
+
+    useEffect(() => {
+        filterMeetings();
+    }, [filterMeetings]);
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -278,7 +274,7 @@ export default function History() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <IconButton 
-                                onClick={() => routeTo("/home")}
+                                onClick={() => routerNavigate("/home")}
                                 sx={{ 
                                     color: 'white',
                                     '&:hover': { color: '#FF9839', transform: 'translateX(-2px)' },
@@ -312,7 +308,7 @@ export default function History() {
                         
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <IconButton 
-                                onClick={() => routeTo("/home")}
+                                onClick={() => routerNavigate("/home")}
                                 sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#FF9839' } }}
                             >
                                 <HomeIcon />
