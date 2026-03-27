@@ -6,14 +6,18 @@ let messages = {}
 let timeOnline = {}
 let userNamesByRoom = {}
 
-export const connectToSocket = (server) => {
+export const connectToSocket = (server, { allowedOrigins = [] } = {}) => {
     const io = new Server(server, {
         cors: {
-            origin: "*",
+            origin: (origin, cb) => {
+                if (!origin) return cb(null, true);
+                if (allowedOrigins.length === 0) return cb(new Error("Not allowed by CORS"));
+                if (allowedOrigins.includes(origin)) return cb(null, true);
+                return cb(new Error("Not allowed by CORS"));
+            },
             methods: ["GET", "POST"],
-            allowedHeaders: ["*"],
-            credentials: true
-        }
+            credentials: true,
+        },
     });
 
 

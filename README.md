@@ -128,7 +128,17 @@ Endpoints:
 
 ## 🔐 Environment Variables
 
-Create a file:
+### Backend (Render)
+
+In Render, set these environment variables (do not rely on `.env` in production):
+
+- `MONGODB_URI`
+- `NODE_ENV=production`
+- `PORT` (Render provides `PORT` automatically in many setups; keep it if needed)
+- `CORS_ORIGINS` (comma-separated, must include your Vercel domain)
+- `RATE_LIMIT_MAX` (optional)
+
+Local development: create a file:
 
 ```
 backend/.env
@@ -139,12 +149,22 @@ backend/.env
 ```env
 MONGODB_URI=mongodb://127.0.0.1:27017/mahameet
 PORT=8000
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:3000
 ```
 
 ### Notes:
 
 * `.env` is used only in **development**
 * In production, use **real environment variables**
+
+### Frontend (Vercel)
+
+In Vercel, set:
+
+- `REACT_APP_BACKEND_URL=https://<your-render-service>.onrender.com`
+
+This is used by the frontend to call the backend API and connect sockets.
 
 ---
 
